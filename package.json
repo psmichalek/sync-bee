@@ -15,5 +15,11 @@
   "bugs": {
     "url": "https://github.com/psmichalek/sync-bee/issues"
   },
-  "homepage": "https://github.com/psmichalek/sync-bee#readme"
+  "homepage": "https://github.com/psmichalek/sync-bee#readme",
+  "dependencies": {
+    "fs-json": "^0.1.2",
+    "lodash": "^4.11.1",
+    "moment": "^2.13.0",
+    "shelljs": "^0.6.0"
+  }
 }
