@@ -1,0 +1,19 @@
+{
+  "name": "sync-bee",
+  "version": "0.0.1",
+  "description": "Can be used to sync files from local filesystem to networked/mapped/mounted drives",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/psmichalek/sync-bee.git"
+  },
+  "author": "Paul Samuel Michalek <psmichalek@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/psmichalek/sync-bee/issues"
+  },
+  "homepage": "https://github.com/psmichalek/sync-bee#readme"
+}
