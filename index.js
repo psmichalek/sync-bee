@@ -66,14 +66,13 @@ SyncBee.prototype._loadconfigs = function(path){
 
 SyncBee.prototype._setconfigs = function(conf){
 	var self = this;
-	if( _.isUndefined(conf) ) console.log('No config file.');
-	else if( _.isUndefined(conf.files) ) console.log('* Error: No files (files) identified in your config file.');
-	else if( conf.files.length>0 && _.isUndefined(conf.files[0].path) ) console.log('No path set for the files.');
+	if( _.isUndefined(conf) ) console.log('Missing config file: '+this.configfile);
+	else if( _.isUndefined(conf.files) ) console.log('* Error: No files to sync identified in your config file (missing the "files" array).');
 	else {
 		self.files = _.clone(conf.files);
 		if(conf.clean) self.cleans = _.clone(conf.clean);
 		if(conf.mountdirs) self.mountdirs = _.clone(conf.mountdirs);
-		else console.log('* Error: No directories (mountdirs) to mount to are identified in your synctostage.json file.');
+		else console.log('* Error: No directories (mountdirs) to mount to are identified in your '+this.configfile+' file.');
 	}
 }
 
@@ -106,8 +105,8 @@ SyncBee.prototype._clean = function(done){
 SyncBee.prototype._copy = function(done){
 	var self = this;
 	if(self.docopy){
-		_.each(self.files,function(fileObj){
-			var file = fileObj.path;
+		_.each(self.files,function(fp){
+			var file = fp;
 			var here = self.evbase+file;console.log(here)
 			if( !test('-e',here) ) self.failed.push({file:file,here:here,there:'no local file',inst:'NA'});
 			else{
