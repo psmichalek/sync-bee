@@ -39,12 +39,12 @@ var SyncBee = function(){
 	if(typeof process.env.EV_BASE!=='undefined') this.evbase = process.env.EV_BASE;
 	else console.log('* Error: EV_BASE is not defined in your environment.');
 	
-	this._loadconfigs(this.configfile);
 }
 
 SyncBee.prototype.run = function(){
 	var self = this;
-	if( !_.isUndefined(self.mountbase) && !_.isUndefined(self.evbase) && !_.isUndefined(self.files) && !_.isUndefined(self.mountdirs) ){
+	
+	function _startsync(){
 		self._log(' Start at '+moment().format("MM/DD/YYYY hh:mm:o A"));
 		self._clean(function(o){
 			self._log(' Cleaned '+self.cleaned.length);
@@ -55,24 +55,33 @@ SyncBee.prototype.run = function(){
 				})
 			})
 		});
-	} 
-	else self._log(' No opertations performed.');
+	}
+
+	if( !_.isUndefined(self.configfile) && self.configfile!=''){
+		self._loadconfigs(self.configfile);
+		if( !_.isUndefined(self.mountbase) && !_.isUndefined(self.evbase) && !_.isUndefined(self.files) && !_.isUndefined(self.mountdirs) ) _startsync();
+		else self._log(' No sync was started due to missing ingredients (i.e. vars undefined)!');
+	} else self._log(' No operations performed.');
+
 }
 
 SyncBee.prototype._loadconfigs = function(path){
 	var self = this;
-	self._setconfigs( fsjson.loadSync(path) );
+	var confs = undefined;
+	try{ confs = fsjson.loadSync(path); } 
+	catch(e){ self._log(' Error loading the config file. ',e); }
+	if ( typeof confs!=='undefined' ) self._setconfigs( confs );
 }
 
 SyncBee.prototype._setconfigs = function(conf){
 	var self = this;
-	if( _.isUndefined(conf) ) console.log('Missing config file: '+this.configfile);
-	else if( _.isUndefined(conf.files) ) console.log('* Error: No files to sync identified in your config file (missing the "files" array).');
+	if( _.isUndefined(conf) ) self._log(' Missing config file: '+self.configfile);
+	else if( _.isUndefined(conf.files) ) self._log(' * Error: No files to sync identified in your config file (missing the "files" array).');
 	else {
 		self.files = _.clone(conf.files);
 		if(conf.clean) self.cleans = _.clone(conf.clean);
 		if(conf.mountdirs) self.mountdirs = _.clone(conf.mountdirs);
-		else console.log('* Error: No directories (mountdirs) to mount to are identified in your '+this.configfile+' file.');
+		else self._log(' * Error: No directories (mountdirs) to mount to are identified in your '+self.configfile+' file.');
 	}
 }
 
@@ -107,7 +116,7 @@ SyncBee.prototype._copy = function(done){
 	if(self.docopy){
 		_.each(self.files,function(fp){
 			var file = fp;
-			var here = self.evbase+file;console.log(here)
+			var here = self.evbase+file;
 			if( !test('-e',here) ) self.failed.push({file:file,here:here,there:'no local file',inst:'NA'});
 			else{
 				_.each(self.mountdirs,function(mountdir){
@@ -166,9 +175,12 @@ SyncBee.prototype._logit = function(key){
 	});
 }
 
-SyncBee.prototype._log = function(txt){
+SyncBee.prototype._log = function(txt,obj){
 	var self = this;
-	if(!self.quietmode) console.log(txt);
+
+	if( !self.quietmode && typeof obj!=='undefined' ) console.log(txt,obj);
+	else if( !self.quietmode && typeof obj==='undefined' ) console.log(txt);
+
 }
 
 module.exports = SyncBee;
