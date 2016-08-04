@@ -54,7 +54,7 @@ SyncBee.prototype.run = function(){
 			self._copy(function(o){
 				self._log(' Copied '+self.copied.length)
 				self._outputs(function(end){
-					if(end) self._log(' Completed at '+moment().format("MM/DD/YYYY hh:mm:ss A"));
+					if(end) self._log(' Completed at '+moment().format("MM/DD/YYYY hh:mm:ss A")+'\n');
 				})
 			})
 		});
@@ -62,19 +62,27 @@ SyncBee.prototype.run = function(){
 
 	if( _.isUndefined(self.mountbase) ){
 		if( !_.isUndefined(process.env.MOUNTDIR) ) self.mountbase = process.env.MOUNTDIR;
-		else throw(' Mount directory base is not defined.');
+		else {
+			self._log(' WARNING: There is no mount directory base path (this.mountbase) defined so all the "mountdirs" paths must be full paths from the local files system root.\n');
+			self.mountbase='';
+		}
 	}
 
 	if( _.isUndefined(self.evbase) ){
 		if( !_.isUndefined(process.env.EV_BASE) ) self.evbase = process.env.EV_BASE;
-		else throw(' File directory base is not defined.');
+		else {
+			self._log(' WARNING: There is no file base path (this.evbase) defined so all the file paths must be full paths from the local files system root.\n');
+			self.evbase='';
+		}
 	}
 
-	if( !_.isUndefined(self.configfile) && self.configfile!=''){
+	if( typeof self.configfile!=='undefined' && self.configfile!=''){
 		self._loadconfigs(self.configfile);
-		if( !_.isUndefined(self.mountbase) && !_.isUndefined(self.evbase) && !_.isUndefined(self.files) && !_.isUndefined(self.mountdirs) ) _startsync();
-		else self._log(' No sync was started due to missing ingredients (i.e. vars undefined)!');
-	} else self._log(' No operations performed.');
+		if( typeof self.mountbase!=='undefined' && typeof self.evbase!=='undefined' && typeof self.files!=='undefined' && typeof self.mountdirs!=='undefined' ) {
+			self._log(' Sync is a go!! ');
+			_startsync();
+		} else self._log(' FAIL: No sync was started due to missing ingredients (i.e. vars undefined)! ');
+	} else self._log(' FAIL: No operations performed.');
 
 }
 
@@ -130,7 +138,7 @@ SyncBee.prototype._copy = function(done){
 		_.each(self.files,function(fp){
 			var file = fp;
 			var here = self.evbase+file;
-			if( !test('-e',here) ) self.failed.push({file:file,here:here,there:'no local file',inst:'NA'});
+			if( !test('-e',here) ) self.failed.push({file:file,here:here,there:'no local file',inst:''});
 			else{
 				_.each(self.mountdirs,function(mountdir){
 					var mountpath = self.mountbase+mountdir+file;
