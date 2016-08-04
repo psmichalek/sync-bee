@@ -3,7 +3,17 @@
  * @description Can be used to sync files from local filesystem to networked/mapped/mounted drives
  * @author Paul S Michalek (psmichalek@gmail.com)
  * @license MIT
- *
+ * @example
+ * 
+ *   var sb 			= require('sync-bee');
+ *   var bee 			= new sb();
+ *   bee.configfile 	= "./myConfig.json"; 		// looks like: { "cleaned":[], "files":[], "mountdirs":[] }; files append to this.evbase and mount paths append to this.mountbase
+ *   bee.fileout 		= "./mySyncedFiles.txt"; 	// file that will show the list of files that were successfully copied
+ *   bee.cleanedfile 	= "./myCleanedFiles.txt"; 	// file that will show the list of files that were successfully cleaned
+ *   bee.testcopy 		= (typeof process.env.diag!=='undefined') ? true : false;
+ *   bee.testclean 		= (typeof process.env.diag!=='undefined') ? true : false;
+ *   bee.run();
+ *   
  * The MIT License (MIT)
  */
 
@@ -16,6 +26,8 @@ require('shelljs/global');
 var SyncBee = function(){
 	if (!(this instanceof SyncBee) ) return new SyncBee();
 	this.configfile = "./configs/syncfiles.json";
+	this.fileout = "./logs/synced.txt";
+	this.cleanedfile = "./logs/cleaned.txt"
 	this.mountdirs = undefined;
 	this.evbase = undefined;
 	this.mountbase = undefined;
@@ -24,21 +36,12 @@ var SyncBee = function(){
 	this.failed = [];
 	this.cleans = [];
 	this.cleaned = [];
-	this.fileout = "./logs/synced.txt";
-	this.cleanedfile = "./logs/cleaned.txt"
 	this.doclean=true;
 	this.docopy=true;
 	this.quietmode=false;
 	this.writetofile=true;
 	this.testcopy=false;
 	this.testclean=false;
-
-	if(typeof process.env.MOUNTDIR!=='undefined') this.mountbase = process.env.MOUNTDIR;
-	else console.log('* Error: MOUNTDIR is not defined in your environment.');
-	
-	if(typeof process.env.EV_BASE!=='undefined') this.evbase = process.env.EV_BASE;
-	else console.log('* Error: EV_BASE is not defined in your environment.');
-	
 }
 
 SyncBee.prototype.run = function(){
@@ -55,6 +58,16 @@ SyncBee.prototype.run = function(){
 				})
 			})
 		});
+	}
+
+	if( _.isUndefined(self.mountbase) ){
+		if( !_.isUndefined(process.env.MOUNTDIR) ) self.mountbase = process.env.MOUNTDIR;
+		else throw(' Mount directory base is not defined.');
+	}
+
+	if( _.isUndefined(self.evbase) ){
+		if( !_.isUndefined(process.env.EV_BASE) ) self.evbase = process.env.EV_BASE;
+		else throw(' File directory base is not defined.');
 	}
 
 	if( !_.isUndefined(self.configfile) && self.configfile!=''){
@@ -89,7 +102,7 @@ SyncBee.prototype._clean = function(done){
 	var self =  this;
 	if(self.doclean){
 		self._setcleanfile();
-		var h = ' Cleaned on '+moment().format("MM/DD/YYYY hh:mm:ss A")+'\n\n';
+		var h = ' Cleaned on '+moment().format("MM/DD/YYYY hh:mm:ss A");
 		if(self.writetofile) h.toEnd(self.cleanedfile);
 		self._log(h);
 		_.each(self.cleans,function(path){
