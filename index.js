@@ -42,17 +42,54 @@ var SyncBee = function(){
 	this.writetofile=true;
 	this.testcopy=false;
 	this.testclean=false;
+	this.project = undefined;
 }
 
 SyncBee.prototype.run = function(){
 	var self = this;
 	
+	self._log('\n');
+	
+	if(typeof self.project==='undefined') {
+		self._log('------------------');
+		self._log(' Sync-Bee Running ');
+		self._log('------------------');
+	} else {
+		self._log('==================================');
+		self._log(' Sync-Bee Running For '+self.project);
+		self._log('==================================');
+	}
+	
+	//self._log('\n');
+
+	function _setTargetDirs(){
+		var goodDirs = _.clone(self.mountdirs);
+		self._log(' Checking mounted drives.');
+
+		function _failed(m,v){ self._log(m); _.pull(goodDirs,v); }
+
+		_.each(self.mountdirs,function(mountdir){
+			var mountedDrive = self.mountbase+mountdir;
+			if( test('-e',mountedDrive) ){
+				var mlist = ls(mountedDrive);
+				if(mlist.length==0) _failed('   WARNING: Drive is not connected to a remote host. '+mountedDrive,mountdir);
+			} else _failed('   WARNING: Mounted directory does not exist. '+mountedDrive,mountdir);
+		});
+
+		self.mountdirs=[];
+		self.mountdirs=_.clone(goodDirs);
+		if(self.mountdirs.length>0){
+			self._log('\n Files will be synced to the following mounted drives: ');
+			_.each(self.mountdirs,function(mountdir){ self._log('    '+self.mountbase+mountdir); });
+		} 
+	}
+
 	function _startsync(){
-		self._log(' Start at '+moment().format("MM/DD/YYYY hh:mm:o A"));
+		self._log('\n Started sync at '+moment().format("MM/DD/YYYY hh:mm:ss A")+'\n');
 		self._clean(function(o){
-			self._log(' Cleaned '+self.cleaned.length);
+			if(self.doclean && self.cleaned.length>0) self._log(' Cleaned '+self.cleaned.length);
 			self._copy(function(o){
-				self._log(' Copied '+self.copied.length)
+				if(self.docopy && self.copied.length>0) self._log(' Copied '+self.copied.length+'\n');
 				self._outputs(function(end){
 					if(end) self._log(' Completed at '+moment().format("MM/DD/YYYY hh:mm:ss A")+'\n');
 				})
@@ -79,8 +116,9 @@ SyncBee.prototype.run = function(){
 	if( typeof self.configfile!=='undefined' && self.configfile!=''){
 		self._loadconfigs(self.configfile);
 		if( typeof self.mountbase!=='undefined' && typeof self.evbase!=='undefined' && typeof self.files!=='undefined' && typeof self.mountdirs!=='undefined' ) {
-			self._log(' Sync is a go!! ');
-			_startsync();
+			_setTargetDirs();
+			if(self.mountdirs.length>0) _startsync();
+			else self._log(' No operations performed due to no drives mounted properly. Check your local filesystem to ensure the paths identified in the config file are there and mounted to the remote host.\n');
 		} else self._log(' FAIL: No sync was started due to missing ingredients (i.e. vars undefined)! ');
 	} else self._log(' FAIL: No operations performed.');
 
@@ -102,13 +140,13 @@ SyncBee.prototype._setconfigs = function(conf){
 		self.files = _.clone(conf.files);
 		if(conf.clean) self.cleans = _.clone(conf.clean);
 		if(conf.mountdirs) self.mountdirs = _.clone(conf.mountdirs);
-		else self._log(' * Error: No directories (mountdirs) to mount to are identified in your '+self.configfile+' file.');
+		else self._log(' ERROR: No directories (mountdirs) to mount to are identified in your '+self.configfile+' file.');
 	}
 }
 
 SyncBee.prototype._clean = function(done){
 	var self =  this;
-	if(self.doclean){
+	if(self.doclean && !_.isUndefined(self.cleans) && self.cleans.length>0){
 		self._setcleanfile();
 		var h = ' Cleaned on '+moment().format("MM/DD/YYYY hh:mm:ss A");
 		if(self.writetofile) h.toEnd(self.cleanedfile);
@@ -138,15 +176,30 @@ SyncBee.prototype._copy = function(done){
 		_.each(self.files,function(fp){
 			var file = fp;
 			var here = self.evbase+file;
-			if( !test('-e',here) ) self.failed.push({file:file,here:here,there:'no local file',inst:''});
-			else{
+			if( !test('-e',here) ) {
+				self._log(' WARNING: Local file not found (double check path value in config). '+here);
+				self.failed.push({file:file,here:here,there:'no local file',inst:''});
+			}else{
 				_.each(self.mountdirs,function(mountdir){
-					var mountpath = self.mountbase+mountdir+file;
-					var there = mountpath.substring(0, mountpath.lastIndexOf("/"));
-					var fii = {file:file,here:here,there:there,inst:mountdir};
-					if(!self.testcopy) cp(here,there);
-					if( self.testcopy || test('-e',there) ) self.copied.push(fii);
-					if( !test('-e',there) ) self.failed.push(fii);
+					if( !_.isUndefined(mountdir) ){
+						var mountedDrive = self.mountbase+mountdir;
+						var mountpath = mountedDrive+file;
+						var there = mountpath.substring(0, mountpath.lastIndexOf("/"));
+						var isDirThere = test('-e',there), 
+							isFileThere = true;
+						var fii = {file:file,here:here,there:there,inst:mountdir};
+						if( !isDirThere ) {
+							self._log(' Creating target directory. '+there);
+							mkdir('-p',there);
+						}
+						if( !self.testcopy ) {
+							cp(here,there);
+							isFileThere = test('-e',mountpath);
+						}
+						if( isFileThere ) self.copied.push(fii);
+						else self.failed.push(fii);
+
+					}
 				});
 			}
 		});
