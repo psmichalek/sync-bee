@@ -4,7 +4,7 @@
  * @author Paul S Michalek (psmichalek@gmail.com)
  * @license MIT
  * @example
- * 
+ *
  *   var sb 			= require('sync-bee');
  *   var bee 			= new sb();
  *   bee.configfile 	= "./myConfig.json"; 		// looks like: { "cleaned":[], "files":[], "mountdirs":[] }; files append to this.evbase and mount paths append to this.mountbase
@@ -13,7 +13,7 @@
  *   bee.testcopy 		= (typeof process.env.diag!=='undefined') ? true : false;
  *   bee.testclean 		= (typeof process.env.diag!=='undefined') ? true : false;
  *   bee.run();
- *   
+ *
  * The MIT License (MIT)
  */
 
@@ -22,7 +22,7 @@ var _ 		= require('lodash'),
 	fsjson 	= require('fs-json')();
 
 require('shelljs/global');
-	
+
 var SyncBee = function(){
 	if (!(this instanceof SyncBee) ) return new SyncBee();
 	this.configfile = "./configs/syncfiles.json";
@@ -47,9 +47,9 @@ var SyncBee = function(){
 
 SyncBee.prototype.run = function(){
 	var self = this;
-	
+
 	self._log('\n');
-	
+
 	if(typeof self.project==='undefined') {
 		self._log('------------------');
 		self._log(' Sync-Bee Running ');
@@ -59,7 +59,7 @@ SyncBee.prototype.run = function(){
 		self._log(' Sync-Bee Running For '+self.project);
 		self._log('==================================');
 	}
-	
+
 	//self._log('\n');
 
 	function _setTargetDirs(){
@@ -81,7 +81,7 @@ SyncBee.prototype.run = function(){
 		if(self.mountdirs.length>0){
 			self._log('\n Files will be synced to the following mounted drives: ');
 			_.each(self.mountdirs,function(mountdir){ self._log('    '+self.mountbase+mountdir); });
-		} 
+		}
 	}
 
 	function _startsync(){
@@ -127,7 +127,7 @@ SyncBee.prototype.run = function(){
 SyncBee.prototype._loadconfigs = function(path){
 	var self = this;
 	var confs = undefined;
-	try{ confs = fsjson.loadSync(path); } 
+	try{ confs = fsjson.loadSync(path); }
 	catch(e){ self._log(' Error loading the config file. ',e); }
 	if ( typeof confs!=='undefined' ) self._setconfigs( confs );
 }
@@ -161,9 +161,9 @@ SyncBee.prototype._clean = function(done){
 					self._log(cmd);
 					if(self.writetofile) cmd.toEnd(self.cleanedfile);
 				} else {
-					rm('-f',rmpath); 
+					rm('-f',rmpath);
 					if(ls(rmpath).length==0) self.cleaned.push(rmpath);
-				} 
+				}
 			});
 		});
 	}
@@ -185,7 +185,7 @@ SyncBee.prototype._copy = function(done){
 						var mountedDrive = self.mountbase+mountdir;
 						var mountpath = mountedDrive+file;
 						var there = mountpath.substring(0, mountpath.lastIndexOf("/"));
-						var isDirThere = test('-e',there), 
+						var isDirThere = test('-e',there),
 							isFileThere = true;
 						var fii = {file:file,here:here,there:there,inst:mountdir};
 						if( !isDirThere ) {
