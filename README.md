@@ -1,5 +1,5 @@
 Sync Bee!
-Can be used to sync files from local filesystem to networked/mapped/mounted drives
+Can be used to sync files from local filesystem to networked/mapped/mounted drives. Prosynkee and Prosynkee-Web use this package to do their business!
 
 #Useage
 
