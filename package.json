@@ -1,6 +1,6 @@
 {
   "name": "sync-bee",
-  "version": "0.0.4",
+  "version": "1.4.0",
   "description": "Can be used to sync files from local filesystem to networked/mapped/mounted drives",
   "main": "index.js",
   "scripts": {
@@ -15,6 +15,15 @@
   "bugs": {
     "url": "https://github.com/psmichalek/sync-bee/issues"
   },
+  "keywords": [
+    "build",
+    "automation",
+    "deployment",
+    "filesystem",
+    "utilities",
+    "sexy",
+    "simple"
+  ],
   "homepage": "https://github.com/psmichalek/sync-bee#readme",
   "dependencies": {
     "fs-json": "^0.1.2",
