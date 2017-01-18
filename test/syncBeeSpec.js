@@ -12,14 +12,14 @@ describe('SyncBee',function(){
 	this.timeout(10000)
 	var busyBee = new SyncBee();
 
-    it('should instanciate a SyncBee object',function(){ 
-        assert.isObject(busyBee); 
+    it('should instanciate a SyncBee object',function(){
+        assert.isObject(busyBee);
     });
-	
-    it('should instaniate a SyncBee object with certain properties',function(){  
+
+    it('should instaniate a SyncBee object with certain properties',function(){
         expect(busyBee).to.have.property('configfile');
         expect(busyBee).to.have.property('mountdirs');
-        expect(busyBee).to.have.property('evbase');
+        expect(busyBee).to.have.property('filebase');
         expect(busyBee).to.have.property('mountbase');
         expect(busyBee).to.have.property('files');
         expect(busyBee).to.have.property('copied');
@@ -35,14 +35,21 @@ describe('SyncBee',function(){
         expect(busyBee).to.have.property('testclean');
     });
 
-    it('should have a specific default config file set',function(){  
-        expect(busyBee).to.have.property('configfile');
-        expect(busyBee.configfile).to.equal("./configs/syncfiles.json");
-    });
+    it('should allow you to manually set a config object',function(){
+        busyBee.setConfigs({
+            clean:[],
+            filebase:'/Users/you/',
+            files:['file1.html'],
+            mountbase:'/Users/mounts',
+            mountdirs:['dev/']}
+        );
 
-    // it('should allow you to set a config object',function(){  
-    //     busyBee._setconfigs({clean:[],files:[{"path":"index.html","id":""}],mountdirs:["dev/"]});
-    //     assert.isArray(busyBee.files);
-    // });
+        assert.isArray(busyBee.files);
+        assert.equal(busyBee.files[0],'file1.html');
+        assert.isArray(busyBee.mountdirs);
+        assert.equal(busyBee.mountdirs[0],'dev/');
+        assert.equal(busyBee.filebase,'/Users/you/');
+        assert.equal(busyBee.mountbase,'/Users/mounts');
+    });
 
 });

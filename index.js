@@ -29,7 +29,7 @@ var SyncBee = function(){
 	this.fileout = "./logs/synced.txt";
 	this.cleanedfile = "./logs/cleaned.txt"
 	this.mountdirs = undefined;
-	this.evbase = undefined;
+	this.filebase = undefined;
 	this.mountbase = undefined;
 	this.files = undefined;
 	this.copied = [];
@@ -43,6 +43,16 @@ var SyncBee = function(){
 	this.testcopy=false;
 	this.testclean=false;
 	this.project = undefined;
+}
+
+SyncBee.prototype.setConfigs = function(conf){
+    var self = this;
+    self._setconfigs(conf);
+}
+
+SyncBee.prototype.loadConfigFile = function(file){
+    var self = this;
+    self._loadconfigs(file);
 }
 
 SyncBee.prototype.run = function(){
@@ -59,8 +69,6 @@ SyncBee.prototype.run = function(){
 		self._log(' Sync-Bee Running For '+self.project);
 		self._log('==================================');
 	}
-
-	//self._log('\n');
 
 	function _setTargetDirs(){
 		var goodDirs = _.clone(self.mountdirs);
@@ -105,17 +113,17 @@ SyncBee.prototype.run = function(){
 		}
 	}
 
-	if( _.isUndefined(self.evbase) ){
-		if( !_.isUndefined(process.env.EV_BASE) ) self.evbase = process.env.EV_BASE;
+	if( _.isUndefined(self.filebase) ){
+		if( !_.isUndefined(process.env.SYNCBEE_FILE_BASE) ) self.filebase = process.env.SYNCBEE_FILE_BASE;
 		else {
-			self._log(' WARNING: There is no file base path (this.evbase) defined so all the file paths must be full paths from the local files system root.\n');
-			self.evbase='';
+			self._log(' WARNING: There is no file base path defined so all the file paths must be full paths from the local files system root.\n');
+			self.filebase='';
 		}
 	}
 
 	if( typeof self.configfile!=='undefined' && self.configfile!=''){
 		self._loadconfigs(self.configfile);
-		if( typeof self.mountbase!=='undefined' && typeof self.evbase!=='undefined' && typeof self.files!=='undefined' && typeof self.mountdirs!=='undefined' ) {
+		if( typeof self.mountbase!=='undefined' && typeof self.filebase!=='undefined' && typeof self.files!=='undefined' && typeof self.mountdirs!=='undefined' ) {
 			_setTargetDirs();
 			if(self.mountdirs.length>0) _startsync();
 			else self._log(' No operations performed due to no drives mounted properly. Check your local filesystem to ensure the paths identified in the config file are there and mounted to the remote host.\n');
@@ -123,6 +131,7 @@ SyncBee.prototype.run = function(){
 	} else self._log(' FAIL: No operations performed.');
 
 }
+
 
 SyncBee.prototype._loadconfigs = function(path){
 	var self = this;
@@ -134,14 +143,16 @@ SyncBee.prototype._loadconfigs = function(path){
 
 SyncBee.prototype._setconfigs = function(conf){
 	var self = this;
-	if( _.isUndefined(conf) ) self._log(' Missing config file: '+self.configfile);
-	else if( _.isUndefined(conf.files) ) self._log(' * Error: No files to sync identified in your config file (missing the "files" array).');
+	if( _.isUndefined(conf) ) self._log(' Missing config object: '+self.configfile);
+	else if( _.isUndefined(conf.files) ) self._log(' * Error: No files to sync identified in your config object (missing the "files" array).');
 	else {
 		self.files = _.clone(conf.files);
 		if(conf.clean) self.cleans = _.clone(conf.clean);
 		if(conf.mountdirs) self.mountdirs = _.clone(conf.mountdirs);
-		else self._log(' ERROR: No directories (mountdirs) to mount to are identified in your '+self.configfile+' file.');
-	}
+		else self._log(' ERROR: No directories (mountdirs) to mount to are identified in the config object.');
+        if( !_.isUndefined(conf.filebase) ) self.filebase = _.clone(conf.filebase);
+        if( !_.isUndefined(conf.mountbase) ) self.mountbase = _.clone(conf.mountbase);
+    }
 }
 
 SyncBee.prototype._clean = function(done){
@@ -175,7 +186,7 @@ SyncBee.prototype._copy = function(done){
 	if(self.docopy){
 		_.each(self.files,function(fp){
 			var file = fp;
-			var here = self.evbase+file;
+			var here = self.filebase+file;
 			if( !test('-e',here) ) {
 				self._log(' WARNING: Local file not found (double check path value in config). '+here);
 				self.failed.push({file:file,here:here,there:'no local file',inst:''});
@@ -229,14 +240,18 @@ SyncBee.prototype._setoutputfile = function(){
 }
 
 SyncBee.prototype._setoutputheader = function(type){
-	var self = this;
-	var h='------------------------ \n';
-	if(type=='main') h=h+' Files Synced On: '+moment().format("MM/DD/YYYY hh:mm:ss A")+' \n';
-	else if(type=='copied') h=h+' SUCCESSFUL ('+self.copied.length+')\n';
-	else if(type=='failed') h=h+' FAILED ('+self.failed.length+')\n';
-	h=h+'------------------------ \n';
-	if(self.writetofile) h.toEnd(self.fileout);
-	return h;
+    var self = this;
+    if( test('-e',self.fileout) ){
+    	var h='------------------------ \n';
+    	if(type=='main') h=h+' Files Synced On: '+moment().format("MM/DD/YYYY hh:mm:ss A")+' \n';
+    	else if(type=='copied') h=h+' SUCCESSFUL ('+self.copied.length+')\n';
+    	else if(type=='failed') h=h+' FAILED ('+self.failed.length+')\n';
+    	h=h+'------------------------ \n';
+    	if(self.writetofile) h.toEnd(self.fileout);
+    	return h;
+    } else {
+        return ''
+    }
 }
 
 SyncBee.prototype._logit = function(key){
@@ -244,7 +259,7 @@ SyncBee.prototype._logit = function(key){
 	self._log( self._setoutputheader(key) );
 	_.each(self[key],function(oo){
 		var out = ' '+self.mountbase+oo.inst+oo.file+'\n';
-		if(self.writetofile) out.toEnd(self.fileout);
+		if(self.writetofile && test('-e',self.fileout) ) out.toEnd(self.fileout);
 		self._log(out);
 	});
 }
