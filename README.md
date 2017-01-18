@@ -3,7 +3,7 @@ Can be used to sync files from local filesystem to networked/mapped/mounted driv
 
 #Useage
 
-Require sync-bee. Create a SyncBee object. Set some properties. Call setConfigs() passing in a configuration object if you want to set configuration object manually. Or, call loadConfigFile() passing in the full path to a json containing the configuration object. Call the run() method. It will output status to the console.
+Require sync-bee. Create a SyncBee object. Set some properties. Call setConfigs() passing in a configuration object if you want to set configuration object manually. Or, call loadConfigFile() passing in the full path to a json file containing the configuration object. Call the run() method. It will output status to the console.
 
 Properties on the sync-bee object to set:
 
