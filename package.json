@@ -1,6 +1,6 @@
 {
   "name": "sync-bee",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "Can be used to sync files from local filesystem to networked/mapped/mounted drives",
   "main": "index.js",
   "scripts": {
