@@ -1,4 +1,4 @@
-Sync Bee!
+##SyncBee!
 Can be used to sync files from local filesystem to networked/mapped/mounted drives. Prosynkee-Web uses this package to do it's business!
 
 #Useage
