@@ -1,5 +1,5 @@
 ##SyncBee!
-Can be used to sync files from local filesystem to networked/mapped/mounted drives. **Prosynkee** uses this package to do it's business!
+Can be used to sync files from local filesystem to networked/mapped/mounted drives. I created this because where I work we have a very old school way of managing and moving code files to different environments. This tool will allow you to use a json data file to store information about a project then sync files accordingly to various environments. I published it to the NPM registry as well so you can do an **npm install sync-bee** as well as clone this repo. However, alone this package will only run from the command line and you have to manually update the json file. I would recommend using my **Prosynkee** app if you'd like a more robust interface. Otherwise use it from the command line or bake it into your own apps!
 
 #Useage
 
